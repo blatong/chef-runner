@@ -16,6 +16,9 @@ type Client struct {
 	// Delete, if true, deletes extraneous files from destination directories.
 	Delete bool
 
+	// DeleteSource, if true, post-deletes files moved to destination directories.
+	DeleteSource bool
+
 	// Compress, if true, compresses file data during the transfer.
 	Compress bool
 
@@ -45,6 +48,14 @@ var MirrorClient = &Client{
 	Compress: true,
 }
 
+// MoveClient is an rsync client configured to move files and directories: copy to destination,
+// deleting from source
+var MoveClient = &Client{
+	Archive:  true,
+	DeleteSource:   true,
+	Compress: true,
+}
+
 // Command returns the rsync command that will be executed by Copy.
 func (c Client) Command(dst string, src ...string) ([]string, error) {
 	if len(src) == 0 {
@@ -62,7 +73,12 @@ func (c Client) Command(dst string, src ...string) ([]string, error) {
 
 	if c.Delete {
 		cmd = append(cmd, "--delete")
+	} else {
+		if c.DeleteSource {
+		cmd = append(cmd, "--remove-source-files")
+		}
 	}
+
 
 	if c.Compress {
 		cmd = append(cmd, "--compress")
